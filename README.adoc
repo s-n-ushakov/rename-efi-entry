@@ -1,0 +1,106 @@
+# rename-efi-entry
+
+[.lead]
+A Bash script to rename EFI boot entries 
+
+## EFI{nbsp}/ UEFI, boot configurations, efibootmgr
+
+EFI{nbsp}/ https://uefi.org/[UEFI] is a specification that defines a software interface between an operating system and
+platform firmware. It is intended by hardware manufacturers to replace the legacy BIOS firmware interface.
+
+In particular this specification allows to define OS boot configurations to be executed upon system power on. These boot
+configurations specify disk partitions to boot from and are typically identified by their text labels that are listed in
+"Startup"{nbsp}/ "Boot" EFI setup section. These boot configurations may be optionally selectable upon system startup.
+
+Operating system installation routines tend to have these boot configuration entry labels hard-coded and to create
+them in EFI PROM automatically. So in case a computer has, say, several Ubuntu instances installed, it is also likely to
+have several identical "ubuntu" boot configuration labels in its EFI menus, causing quite a confusion.
+
+One might further want to rename boot configurations, so to make them distinguishable, but unfortunately the standard
+https://github.com/rhboot/efibootmgr[`efibootmgr`] utility has no option for that. It is only possible to delete a boot
+configuration entry and re-create it with a new label. Meanwhile, the data that is necessary for re-creating a boot
+configuration entry is not trivial and requires certain inquiries into EFI configuration and disk partition attributes.
+
+## The script
+
+The `rename-efi-entry` script is designed to facilitate renaming EFI boot configuration entries using `efibootmgr`
+utility. It automates querying current EFI configuration and bootable partition data, and also shaping command line
+arguments for `efibootmgr`.
+
+### Usage
+
+ sudo ./rename-efi-entry existing_efi_label new_efi_label [bootnum]
+
+[%autowidth,cols=2]
+.Command line arguments
+|===
+|`existing_efi_label`
+|existing EFI entry label to be renamed
+
+|`new_efi_label`
+|the new label value to be assigned
+
+|`bootnum`
+|optional: the `bootnum` value of the EFI entry to be renamed, required in case of repeating label values to avoid
+ambiguity 
+|===
+
+E.g.:
+
+ sudo ./rename-efi-entry ubuntu 'ubuntu 18.04'
+
+or in case of multiple boot entries labeled as 'ubuntu':
+
+ sudo ./rename-efi-entry ubuntu 'ubuntu 18.04' 0001
+
+In case of doubt `bootnum` values may be clarified using `efibootmgr --verbose` command:
+
+....
+$ efibootmgr --verbose
+BootCurrent: 0001
+Timeout: 0 seconds
+BootOrder: 0002,0001,0017,001B,0000,0016,0019,001A,0018
+Boot0000  Windows Boot Manager	HD(1,MBR,0x5092863d,0x3cde8c,0x1340)/File(\EFI\Microsoft\Boot\bootmgfw.efi)WINDOWS...
+Boot0001* ubuntu            	HD(1,GPT,2ffcc127-f6ce-40f0-9932-d1dfd14e9462,0x800,0x100000)/File(\EFI\ubuntu\shimx64.efi)
+Boot0002* ubuntu            	HD(1,GPT,cba13b09-d754-4d31-9719-369fa60928d1,0x800,0x100000)/File(\EFI\ubuntu\shimx64.efi)
+Boot0010  ...
+....
+
+Required `bootnum` values (e.g. `0001` from `Boot0001`) may be further identified by checking corresponding `uuid`
+values (e.g. `2ffcc127-f6ce-40f0-9932-d1dfd14e9462`) against values provided by `sfdisk -d` command, e.g.:
+
+....
+$ sudo sfdisk -d /dev/sda
+label: gpt
+label-id: 0560DAA2-3010-47A2-B083-047C813F0A04
+device: /dev/sda
+unit: sectors
+first-lba: 34
+last-lba: 1953525134
+
+/dev/sda1 : start=        2048, size=     1048576, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, uuid=2FFCC127-F6CE-40F0-9932-D1DFD14E9462, name="EFI System Partition"
+/dev/sda2 : start=     1050624, size=   102400000, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, uuid=A06790C2-3818-4F57-84EF-4D1B9FFB417E, name="SSD system"
+/dev/sda3 : start=   103450624, size=  1850073088, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, uuid=67A374C2-081E-477E-945C-78BE129A2044, name="SSD data"
+....
+
+### Implementation details
+
+What the script does under the hood, is:
+
+- obtain a list of disk devices using `lsblk`;
+- obtain a list of disk partitions and their `uuid` values for every disk device using `sfdisk`;
+- obtain a list of EFI boot entries using `efibootmgr`;
+- filter EFI boot entries against `existing_efi_label` value, supplied by the user as command line argument;
+- make sure that this boot entry identification is unique, using `bootnum` if necessary;
+- extract `uuid` value from the EFI boot entry to be renamed, and use it to identify the relevant disk partition and its
+device name;
+- verify matching of partition numbers between EFI boot entry and partition device name;
+- shape the commands for `efibootmgr` to delete the existing EFI boot entry and to create a new one with required label;
+- ask final user consent;
+- apply the `efibootmgr` commands. 
+
+### Important usage notes
+
+Feel free to use, but do it on your risk :)
+
+It may be wise to review the `efibootmgr` commands before final execution...
