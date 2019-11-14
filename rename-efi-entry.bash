@@ -8,15 +8,32 @@
 # See https://www.linuxbabe.com/command-line/how-to-use-linux-efibootmgr-examples .
 #
 # Usage:
-#     sudo ./rename-efi-entry existing_efi_label new_efi_label [bootnum]
+#     sudo ./rename-efi-entry.bash existing_efi_label new_efi_label [bootnum]
 # Example:
-#     sudo ./rename-efi-entry ubuntu 'ubuntu 18.04'
+#     sudo ./rename-efi-entry.bash ubuntu 'ubuntu 18.04'
 #   or:
-#     sudo ./rename-efi-entry ubuntu 'ubuntu 18.04' 0001
+#     sudo ./rename-efi-entry.bash ubuntu 'ubuntu 18.04' 0001
 #
 # Author: Sergey Ushakov <s-n-ushakov@yandex.ru>
-# Date:   2019-10-31
+# Dates:  2019-10-31 .. 2019-11-14
 #=======================================================================================================================
+
+# function to print usage
+print_usage () {
+  echo Usage:
+  echo "  sudo $0 existing_efi_label new_efi_label [bootnum]"
+  echo Example:
+  echo "  sudo $0 ubuntu 'ubuntu 18.04'"
+  echo Example:
+  echo "  sudo $0 ubuntu 'ubuntu 18.04' 0001"
+}
+
+# check whether we run as root
+if [[ $EUID -ne 0 ]]; then
+  echo "$0 : ERROR : this script must be run as root"
+  print_usage
+  exit 1
+fi
 
 # check command line arguments
 if [ -z "$2" ] ; then
@@ -25,12 +42,7 @@ if [ -z "$2" ] ; then
   else
     echo "$0 : ERROR : no new EFI label specified."
   fi
-  echo Usage:
-  echo "  sudo $0 existing_efi_label new_efi_label [bootnum]"
-  echo Example:
-  echo "  sudo $0 ubuntu 'ubuntu 18.04'"
-  echo Example:
-  echo "  sudo $0 ubuntu 'ubuntu 18.04' 0001"
+  print_usage
   exit 1
 fi
 old_label="$1"
@@ -81,7 +93,7 @@ for disk_name in "${disk_names[@]}" ; do
 done
 # ----------------------------------------------------------------------------------------------------------------------
 
-# obtain EFI data
+# obtain EFI data ------------------------------------------------------------------------------------------------------
 
 # obtain EFI data as long text
 efi_data_all=$(efibootmgr --verbose)
