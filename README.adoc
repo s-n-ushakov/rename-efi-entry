@@ -3,7 +3,9 @@
 [.lead]
 A Bash script to rename EFI boot entries 
 
-## EFI{nbsp}/ UEFI, boot configurations, efibootmgr
+## Background
+
+### EFI{nbsp}/ UEFI, boot configurations
 
 EFI{nbsp}/ https://uefi.org/[UEFI] is a specification that defines a software interface between an operating system and
 platform firmware. It is intended by hardware manufacturers to replace the legacy BIOS firmware interface.
@@ -12,9 +14,11 @@ In particular this specification allows to define OS boot configurations to be e
 configurations specify disk partitions to boot from and are typically identified by their text labels that are listed in
 "Startup"{nbsp}/ "Boot" EFI setup section. These boot configurations may be optionally selectable upon system startup.
 
+### The problem
+
 Operating system installation routines tend to have these boot configuration entry labels hard-coded and to create
 them in EFI PROM automatically. So in case a computer has, say, several Ubuntu instances installed, it is also likely to
-have several identical "ubuntu" boot configuration labels in its EFI menus, causing quite a confusion.
+have several identical "ubuntu" boot configuration labels in its EFI menus, causing a kind of confusion.
 
 One might further want to rename boot configurations, so to make them distinguishable, but unfortunately the standard
 https://github.com/rhboot/efibootmgr[`efibootmgr`] utility has no option for that. It is only possible to delete a boot
@@ -31,7 +35,7 @@ arguments for `efibootmgr`.
 
  sudo ./rename-efi-entry existing_efi_label new_efi_label [bootnum]
 
-[%autowidth,cols=2]
+[%autowidth,cols=2*.<]
 .Command line arguments
 |===
 |`existing_efi_label`
@@ -98,6 +102,10 @@ device name;
 - shape the commands for `efibootmgr` to delete the existing EFI boot entry and to create a new one with required label;
 - ask final user consent;
 - apply the `efibootmgr` commands. 
+
+### Limitations
+
+This script can only rename EFI boot entries that are related to Linux. It will most probably ignore the other ones.
 
 ### Important usage notes
 
