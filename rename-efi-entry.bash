@@ -84,7 +84,7 @@ for disk_name in "${disk_names[@]}" ; do
 
   # parse partition data and add to the result array
   for partition_data_line in "${partition_data_array[@]}" ; do
-    if [[ $partition_data_line =~ ^([^[:blank:]]+)[[:blank:]]:[[:blank:]].*[[:blank:]]uuid=([^,]+), ]] ; then
+    if [[ $partition_data_line =~ ^([^[:blank:]]+)[[:blank:]]:[[:blank:]].*[[:blank:]]uuid=([^,[:blank:]]+) ]] ; then
       device=${BASH_REMATCH[1]}
       uuid_lowercase="${BASH_REMATCH[2],,}"
       partitions[$uuid_lowercase]=$device
