@@ -1,3 +1,6 @@
+// This document is authored using Asciidoctor:
+// https://asciidoctor.org/
+
 # rename-efi-entry
 
 [.lead]
@@ -29,8 +32,8 @@ configuration entry is not trivial and requires certain inquiries into EFI confi
 ## The script
 
 The `rename-efi-entry` script is designed to facilitate renaming EFI boot configuration entries using `efibootmgr`
-utility. It automates querying current EFI configuration and bootable partition data, and also shaping command line
-arguments for `efibootmgr`.
+utility for entry deleting and re-creation. It automates querying current EFI configuration and bootable partition data,
+and also shaping command line arguments for `efibootmgr`.
 
 ### Usage
 
@@ -58,7 +61,7 @@ or in case of multiple boot entries labeled as 'ubuntu':
 
  sudo ./rename-efi-entry ubuntu 'ubuntu 18.04' 0001
 
-In case of doubt `bootnum` values may be clarified using `efibootmgr --verbose` command:
+In case of doubt `bootnum` values may be clarified using `efibootmgr --verbose` command, see the first column:
 
 ....
 $ efibootmgr --verbose
@@ -113,3 +116,16 @@ This script can only rename EFI boot entries that are related to Linux. It will 
 Feel free to use, but do it on your risk :)
 
 It may be wise to review the `efibootmgr` commands before final execution...
+
+## Licenses
+
+The project is issued and distributed under the following licenses:
+
+- link:LICENSE.BSD[The BSD 2-Clause License] - for those who may care about legal issues seriously :)
+- link:LICENSE.LITL[The License in Three Lines (LITL)] - for those who may like it :) +
+  More on LITL:
+** Original of 2010
+*** https://github.com/license-in-three-lines?tab=repositories
+** Revival of 2013
+*** https://litl-license.org/
+*** https://github.com/litl-license/litl-license

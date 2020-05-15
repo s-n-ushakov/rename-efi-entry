@@ -14,8 +14,10 @@
 #   or:
 #     sudo ./rename-efi-entry.bash ubuntu 'ubuntu 18.04' 0001
 #
-# Author: Sergey Ushakov <s-n-ushakov@yandex.ru>
-# Dates:  2019-10-31 .. 2019-11-14
+# Author:  Sergey Ushakov <s-n-ushakov@yandex.ru> : https://github.com/s-n-ushakov
+# Started: 2019-10-31
+# Contributors:
+#   - Craig Francis                               : https://github.com/craigfrancis
 #=======================================================================================================================
 
 # function to print usage
@@ -83,6 +85,10 @@ for disk_name in "${disk_names[@]}" ; do
   readarray -t partition_data_array <<<"$partition_data_all"
 
   # parse partition data and add to the result array
+  # raw data examples:
+  # - Ubuntu 18.04
+  #   /dev/sda1 : start=        2048, size=     1048576, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, uuid=2FFCC127-F6CE-40F0-9932-D1DFD14E9462, name="EFI System Partition"
+  #   /dev/sda1 : start=        2048, size=     1048576, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, uuid=2FFCC127-F6CE-40F0-9932-D1DFD14E9462
   for partition_data_line in "${partition_data_array[@]}" ; do
     if [[ $partition_data_line =~ ^([^[:blank:]]+)[[:blank:]]:[[:blank:]].*[[:blank:]]uuid=([^,[:blank:]]+) ]] ; then
       device=${BASH_REMATCH[1]}
