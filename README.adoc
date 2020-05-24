@@ -109,7 +109,10 @@ device name;
 
 ### Limitations
 
-This script can only rename EFI boot entries that are related to Linux. It will most probably ignore the other ones.
+This script was designed to rename EFI boot entries that are related to Linux. It may probably ignore the other ones.
+Still it is
+https://github.com/FroggMaster/EFIRename/blame/603f93f0a3ef9487896d9b6404a1f07eef4ce53a/README.adoc#L109-L110[reported]
+to deal with Windows 10 entries successfully too. 
 
 ### Important usage notes
 
@@ -121,8 +124,8 @@ It may be wise to review the `efibootmgr` commands before final execution...
 
 The project is issued and distributed under the following licenses:
 
-- link:LICENSE.BSD[The BSD 2-Clause License] - for those who may care about legal issues seriously :)
-- link:LICENSE.LITL[The License in Three Lines (LITL)] - for those who may like it :) +
+* link:LICENSE.BSD[The BSD 2-Clause License] - for those who may care about legal issues seriously :)
+* link:LICENSE.LITL[The License in Three Lines (LITL)] - for those who may like it :) +
   More on LITL:
 ** Original of 2010
 *** https://github.com/license-in-three-lines?tab=repositories
