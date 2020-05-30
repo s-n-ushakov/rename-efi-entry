@@ -145,9 +145,9 @@ if [ -z "$device_for_uuid" ] ; then
 fi
 
 # verify that device name matches expected pattern
-if [[ $device_for_uuid =~ ^(/dev/[a-z]{3})([[:digit:]]+) ]] ; then
+if [[ $device_for_uuid =~ ^(/dev/(sd[a-z]|nvme[[:digit:]]+n[[:digit:]]+|mmcblk[[:digit:]]+))p?([[:digit:]]+)$ ]] ; then
   device_name=${BASH_REMATCH[1]}
-  device_part=${BASH_REMATCH[2]}
+  device_part=${BASH_REMATCH[3]}
 else
   echo "$0 : ERROR : unexpected device name format '$device_for_uuid' found by 'sfdisk' for partition that relates to the given label."
   exit 1
