@@ -50,7 +50,7 @@ and also shaping command line arguments for `efibootmgr`.
 
 |`bootnum`
 |optional: the `bootnum` value of the EFI entry to be renamed, required in case of repeating label values to avoid
-ambiguity 
+ambiguity
 |===
 
 E.g.:
@@ -105,14 +105,23 @@ device name;
 - verify matching of partition numbers between EFI boot entry and partition device name;
 - shape the commands for `efibootmgr` to delete the existing EFI boot entry and to create a new one with required label;
 - ask final user consent;
-- apply the `efibootmgr` commands. 
+- apply the `efibootmgr` commands.
 
 ### Limitations
 
 This script was designed to rename EFI boot entries that are related to Linux. It may probably ignore the other ones.
 Still it is
 https://github.com/FroggMaster/EFIRename/blame/603f93f0a3ef9487896d9b6404a1f07eef4ce53a/README.adoc#L109-L110[reported]
-to deal with Windows 10 entries successfully too. 
+to deal with Windows 10 entries successfully too.
+
+For an EFI boot entry to be renamed, the related device needs to be attached/known to the system currently running.
+
+The following boot device types are recognized and honored (see
+https://wiki.archlinux.org/index.php/Device_file#Block_device_names[Arch Linux : Device file : Block device names]):
+
+- SCSI family, e.g. `/dev/sda1`
+- NVMe, e.g. `/dev/nvme0n1p1`
+- MMC family, e.g. `/dev/mmcblk0p1`
 
 ### Important usage notes
 

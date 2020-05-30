@@ -18,6 +18,7 @@
 # Started: 2019-10-31
 # Contributors:
 #   - Craig Francis                               : https://github.com/craigfrancis
+#   - Jeric de Leon                               : https://github.com/jericdeleon
 #=======================================================================================================================
 
 # function to print usage
@@ -30,10 +31,18 @@ print_usage () {
   echo "  sudo $0 ubuntu 'ubuntu 18.04' 0001"
 }
 
+# function to print usage and EFI data
+print_usage_and_efi_data () {
+  print_usage
+  echo
+  echo Current EFI data:
+  efibootmgr --verbose
+}
+
 # check whether we run as root
 if [[ $EUID -ne 0 ]]; then
   echo "$0 : ERROR : this script must be run as root"
-  print_usage
+  print_usage_and_efi_data
   exit 1
 fi
 
@@ -41,11 +50,13 @@ fi
 if [ -z "$2" ] ; then
   if [ -z "$1" ] ; then
     echo "$0 : ERROR : no existing EFI label specified to be renamed."
+    print_usage_and_efi_data
+    exit 1
   else
     echo "$0 : ERROR : no new EFI label specified."
+    print_usage
+    exit 1
   fi
-  print_usage
-  exit 1
 fi
 old_label="$1"
 new_label="$2"
@@ -144,7 +155,12 @@ if [ -z "$device_for_uuid" ] ; then
   exit 1
 fi
 
-# verify that device name matches expected pattern
+# verify that device/partition name matches expected pattern;
+# the following partition name patterns/samples are recognized:
+# - /dev/sda1
+# - /dev/nvme0n1p1
+# - /dev/mmcblk0p1
+# see https://wiki.archlinux.org/index.php/Device_file#Block_device_names
 if [[ $device_for_uuid =~ ^(/dev/(sd[a-z]|nvme[[:digit:]]+n[[:digit:]]+|mmcblk[[:digit:]]+))p?([[:digit:]]+)$ ]] ; then
   device_name=${BASH_REMATCH[1]}
   device_part=${BASH_REMATCH[3]}
