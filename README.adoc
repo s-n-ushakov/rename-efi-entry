@@ -10,12 +10,13 @@ A Bash script to rename EFI boot entries
 
 ### EFI{nbsp}/ UEFI, boot configurations
 
-EFI{nbsp}/ https://uefi.org/[UEFI] is a specification that defines a software interface between an operating system and
-platform firmware. It is intended by hardware manufacturers to replace the legacy BIOS firmware interface.
+EFI{nbsp}/ https://uefi.org/specifications/[UEFI] is a specification that defines a software interface between an
+operating system and platform firmware. It is intended by hardware manufacturers to replace the legacy BIOS firmware
+interface.
 
 In particular this specification allows to define OS boot configurations to be loaded{nbsp}/ executed upon system power
-on. These boot configurations specify disk partitions to boot from and are typically identified by their text labels
-that are listed in the "Startup"{nbsp}/ "Boot" EFI setup section. These boot configurations may be optionally selectable
+on. These boot configurations specify disk partitions to boot from, and are typically identified by their text labels
+that are listed in "Startup"{nbsp}/ "Boot" EFI setup sections. These boot configurations may be optionally selectable
 upon system startup.
 
 ### The problem
@@ -26,31 +27,37 @@ several identical "ubuntu" boot configuration labels in its EFI menus, causing a
 
 One might further want to rename boot configurations, so to make them distinguishable, but unfortunately the standard
 https://github.com/rhboot/efibootmgr[`efibootmgr`] utility has no option for that. It is only possible to delete a boot
-configuration entry and re-create it with a new label. Meanwhile, the data that is necessary for re-creating a boot
+configuration entry and to re-create it with a new label. Meanwhile, the data that is necessary for re-creating a boot
 configuration entry is not trivial and requires certain inquiries into EFI configuration and disk partition attributes.
 
 ## The script
 
-The `rename-efi-entry` script is designed to facilitate renaming EFI boot configuration entries using `efibootmgr`
-utility for entry deleting and re-creation. It automates querying current EFI configuration and bootable partition data,
-and also shaping command line arguments for `efibootmgr`.
+The `rename-efi-entry` script is designed to help renaming EFI boot configuration entries using `efibootmgr` utility for
+entry deletion and re-creation. It automates querying current EFI configuration and bootable partition data, and also
+shaping command line arguments for `efibootmgr`.
 
 ### Usage
 
  sudo ./rename-efi-entry.bash existing_efi_label new_efi_label [bootnum]
 
-[%autowidth,cols=2*.<]
+// a table with:
+// - automatic column width,
+// - 2 columns top-aligned, see https://blog.mrhaki.com/2014/11/awesome-asciidoctor-table-column-and.html
+// - title with no default numbered caption, see https://github.com/asciidoctor/asciidoctor/issues/1563
+[%autowidth,cols=2*.<,caption=]
 .Command line arguments
 |===
 |`existing_efi_label`
-|existing EFI entry label to be renamed
+|existing EFI entry label to be renamed; +
+a special value of `'*'` is recognized as a placeholder for "any label", in particular to be used in cases of missing
+label
 
 |`new_efi_label`
 |the new label value to be assigned
 
 |`bootnum`
-|optional: the `bootnum` value of the EFI entry to be renamed, required in case of repeating label values to avoid
-ambiguity
+|conditionally optional: the `bootnum` value of the EFI entry to be renamed; +
+required in case of multiple matching label values, so to avoid ambiguity
 |===
 
 E.g.:
@@ -61,8 +68,14 @@ or in case of multiple boot entries labeled as 'ubuntu':
 
  sudo ./rename-efi-entry ubuntu 'ubuntu 18.04' 0001
 
-In case of doubt `bootnum` values may be clarified using `efibootmgr --verbose` command, see the first column:
+or in case of missing boot entry label in EFI menu:
 
+ sudo ./rename-efi-entry '*' 'ubuntu 18.04' 0001
+
+In case of doubt `bootnum` values may be clarified using `efibootmgr --verbose` command, see entries like `Boot0001*` in
+the first column:
+
+[options="nowrap"]
 ....
 $ efibootmgr --verbose
 BootCurrent: 0001
@@ -74,9 +87,10 @@ Boot0002* ubuntu            	HD(1,GPT,cba13b09-d754-4d31-9719-369fa60928d1,0x800
 Boot0010  ...
 ....
 
-Required `bootnum` values (e.g. `0001` from `Boot0001`) may be further identified by checking corresponding `uuid`
+Required `bootnum` values (e.g. `0001` from `Boot0001*`) may be further identified by checking corresponding `uuid`
 values (e.g. `2ffcc127-f6ce-40f0-9932-d1dfd14e9462`) against values provided by `sfdisk -d` command, e.g.:
 
+[options="nowrap"]
 ....
 $ sudo sfdisk -d /dev/sda
 label: gpt
@@ -109,19 +123,31 @@ device name;
 
 ### Limitations
 
-This script was designed to rename EFI boot entries that are related to Linux. It may probably ignore the other ones.
+This script was designed to rename EFI boot entries that are related to Linux. It is likely to ignore the other ones.
 Still it is
 https://github.com/FroggMaster/EFIRename/blame/603f93f0a3ef9487896d9b6404a1f07eef4ce53a/README.adoc#L109-L110[reported]
 to deal with Windows 10 entries successfully too.
 
-For an EFI boot entry to be renamed, the related device needs to be attached/known to the system currently running.
+For an EFI boot entry to be renamed, the related device needs to be attached{nbsp}/ known to the system currently
+running.
 
 The following boot device types are recognized and honored (see
 https://wiki.archlinux.org/index.php/Device_file#Block_device_names[Arch Linux : Device file : Block device names]):
 
-- SCSI family, e.g. `/dev/sda1`
-- NVMe, e.g. `/dev/nvme0n1p1`
-- MMC family, e.g. `/dev/mmcblk0p1`
+// a table with:
+// - automatic column width,
+// - 2 columns
+[%autowidth,cols=2]
+|===
+|SCSI family
+|e.g. `/dev/sda1`
+
+|NVMe
+|e.g. `/dev/nvme0n1p1`
+
+|MMC family
+|e.g. `/dev/mmcblk0p1`
+|===
 
 ### Important usage notes
 
@@ -134,10 +160,16 @@ It may be wise to review the `efibootmgr` commands before final execution...
 The project is issued and distributed under the following licenses:
 
 * link:LICENSE.BSD[The BSD 2-Clause License] - for those who may care about legal issues seriously :)
-* link:LICENSE.LITL[The License in Three Lines (LITL)] - for those who may like it :) +
-  More on LITL:
-** Original of 2010
-*** https://github.com/license-in-three-lines?tab=repositories
-** Revival of 2013
-*** https://litl-license.org/
-*** https://github.com/litl-license/litl-license
+* link:LICENSE.LITL[The License in Three Lines (LITL)] - for those who may like it :)
+
+// a collapsible block, still undocumented feature,
+// see: https://github.com/asciidoctor/asciidoctor/issues/1699#issuecomment-473773056
+.More on LITL
+[%collapsible]
+====
+* Original of 2010
+** https://github.com/license-in-three-lines?tab=repositories
+* Revival of 2013
+** https://litl-license.org/
+** https://github.com/litl-license/litl-license
+====
