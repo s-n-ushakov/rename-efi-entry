@@ -105,7 +105,7 @@ for disk_name in "${disk_names[@]}" ; do
   #   /dev/sda1 : start=        2048, size=     1048576, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, uuid=2FFCC127-F6CE-40F0-9932-D1DFD14E9462, name="EFI System Partition"
   #   /dev/sda1 : start=        2048, size=     1048576, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, uuid=2FFCC127-F6CE-40F0-9932-D1DFD14E9462
   for partition_data_line in "${partition_data_array[@]}" ; do
-    if [[ $partition_data_line =~ ^([^[:blank:]]+)[[:blank:]]:[[:blank:]].*[[:blank:]]uuid=([^,[:blank:]]+) ]] ; then
+    if [[ $partition_data_line =~ ^([^[:blank:]]+)[[:blank:]]:[[:blank:]].*[[:blank:]]uuid=([^,]+) ]] ; then
       device=${BASH_REMATCH[1]}
       uuid_lowercase="${BASH_REMATCH[2],,}"
       partitions[$uuid_lowercase]=$device
@@ -148,7 +148,7 @@ done
 
 # check if a matching label was found
 if [ -z "$target_bootnum" ] ; then
-  echo "$0 : ERROR : no EFI data found for label '$old_label'."
+  echo "$0 : ERROR : no EFI data found for any label matching '$old_label'."
   exit 1
 fi
 
