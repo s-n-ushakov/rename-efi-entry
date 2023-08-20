@@ -13,12 +13,14 @@
 #     sudo ./rename-efi-entry.bash ubuntu 'ubuntu 18.04'
 #   or:
 #     sudo ./rename-efi-entry.bash ubuntu 'ubuntu 18.04' 0001
+#   or:
+#     sudo ./rename-efi-entry.bash '*' 'ubuntu 18.04' 0001
 #
 # Author:  Sergey Ushakov <s-n-ushakov@yandex.ru> : https://github.com/s-n-ushakov
 # Started: 2019-10-31
 # Contributors:
-#   - Craig Francis                               : https://github.com/craigfrancis
-#   - Jeric de Leon                               : https://github.com/jericdeleon
+#   - Craig Francis                               : https://github.com/craigfrancis : partition table regex refinement
+#   - Jeric de Leon                               : https://github.com/jericdeleon  : NVMe and MMC support
 #=======================================================================================================================
 
 # function to print usage
@@ -159,11 +161,11 @@ if [ -z "$device_for_uuid" ] ; then
   exit 1
 fi
 
-# verify that device/partition name matches the expected pattern;
+# verify that device/partition name matches some expected pattern;
 # the following partition name patterns/samples are recognized:
-# - /dev/sda1
-# - /dev/nvme0n1p1
-# - /dev/mmcblk0p1
+# - SCSI family : e.g. /dev/sda1
+# - NVMe        : e.g. /dev/nvme0n1p1
+# - MMC family  : e.g. /dev/mmcblk0p1
 # see https://wiki.archlinux.org/index.php/Device_file#Block_device_names
 if [[ $device_for_uuid =~ ^(/dev/(sd[a-z]|nvme[[:digit:]]+n[[:digit:]]+|mmcblk[[:digit:]]+))p?([[:digit:]]+)$ ]] ; then
   device_name=${BASH_REMATCH[1]}

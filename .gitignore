@@ -1,1 +1,6 @@
+# Eclipse
+/.settings/
 /.project
+
+# Eclipse Asciidoctor Editor plugin
+/.asciidoctorconfig.adoc

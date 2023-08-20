@@ -170,6 +170,6 @@ The project is issued and distributed under the following licenses:
 * Original of 2010
 ** https://github.com/license-in-three-lines?tab=repositories
 * Revival of 2013
-** https://litl-license.org/
 ** https://github.com/litl-license/litl-license
+** https://litl-license.org/                    : 2023-08 : Domain not found
 ====
