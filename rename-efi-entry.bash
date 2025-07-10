@@ -173,25 +173,55 @@ efi_data_all=$(efibootmgr --verbose)
 # split EFI data into a string array
 readarray -t efi_data_array <<<"$efi_data_all"
 
+target_bootnum=""
+target_part=""
+target_uuid=""
+target_loader=""
+
 # obtain EFI data for a matching label
 for efi_data_line in "${efi_data_array[@]}" ; do
-  if [[ $efi_data_line =~ ^Boot([[:xdigit:]]{4})\*?[[:blank:]]+(.+)[[:blank:]]+HD\(([[:digit:]]+),[^,]+,([^,]+)[^\)]+\)/File\(([^\)]+)\) ]] ; then
-    label="${BASH_REMATCH[2]}"
-    if [ "$label" = "$old_label" ] || [ "$old_label" = '*' ] ; then
-      if [ -z "$target_bootnum" ] ; then   # no `bootnum` match or candidate found yet
-        if [ -z "$old_bootnum" ] || [ ${BASH_REMATCH[1]} = "$old_bootnum" ] ; then
-          target_bootnum=${BASH_REMATCH[1]}
-          target_part=${BASH_REMATCH[3]}
-          target_uuid=${BASH_REMATCH[4]}
-          target_loader=${BASH_REMATCH[5]}
-        fi
-      else   # `bootnum` match or candidate already found
-        if [ -z "$old_bootnum" ] ; then
-          echo "ERROR: more than one boot entry found with label matching '$old_label': $target_bootnum and ${BASH_REMATCH[1]};"
-          echo "       please use optional 'bootnum' command line argument to resolve this ambiguity."
-          exit 1
-        fi
+
+  # These will be set if a line matches one of our regexes
+  line_bootnum="" line_label="" line_part="" line_uuid="" line_loader=""
+
+  # Try to match the line against known formats
+  if [[ $efi_data_line =~ $REGEX_LOADER ]]; then
+    line_bootnum="${BASH_REMATCH[1]}"
+    line_label="${BASH_REMATCH[2]}"
+    line_part="${BASH_REMATCH[3]}"
+    line_uuid="${BASH_REMATCH[4],,}" # lowercase for consistency
+    line_loader="${BASH_REMATCH[5]}"
+    debug "Parsed entry: BootNum=$line_bootnum, Label='$line_label' (standard format)"
+
+  elif [[ $efi_data_line =~ $REGEX_LOADER_FILE ]]; then
+    line_bootnum="${BASH_REMATCH[1]}"
+    line_label="${BASH_REMATCH[2]}"
+    line_part="${BASH_REMATCH[3]}"
+    line_uuid="${BASH_REMATCH[4],,}" # lowercase for consistency
+    line_loader="${BASH_REMATCH[5]}"
+    debug "Parsed entry: BootNum=$line_bootnum, Label='$line_label' (File() format)"
+
+  else
+    debug "Line did not match any known EFI entry format, skipping: $efi_data_line"
+    continue
+  fi
+
+  # Now check if this parsed line is the one we are looking for
+  if [[ "$old_label" == "$line_label" || "$old_label" == "*" ]]; then
+    # Label matches. Now check if boot number matches (if one was provided).
+    if [[ -z "$old_bootnum" || "$old_bootnum" == "$line_bootnum" ]]; then
+      # This is a match. Check for ambiguity.
+      if [[ -n "$target_bootnum" ]]; then
+        echo "$0 : ERROR : more than one boot entry found matching label '$old_label'." >&2
+        echo "       Found $target_bootnum and now $line_bootnum. Please use the optional 'bootnum' argument to specify which one." >&2
+        exit 1
       fi
+      # This is our first and only match so far. Store its details.
+      debug "Found a matching target entry: Boot$line_bootnum"
+      target_bootnum="$line_bootnum"
+      target_part="$line_part"
+      target_uuid="$line_uuid"
+      target_loader="$line_loader"
     fi
   fi
 done
@@ -241,13 +271,22 @@ efi_command_2="efibootmgr --create --disk $device_name --part $target_part --lab
 echo The following commands are about to be executed:
 echo "  $efi_command_1"
 echo "  $efi_command_2"
-read -p "Execute these commands? [y/N] " -n 1 -r
-echo   # terminate the shell UI line
-if [[ $REPLY =~ ^[Yy]$ ]] ; then
-  echo "... executing \`$efi_command_1\` ..."
-  eval $efi_command_1
-  echo "... executing \`$efi_command_2\` ..."
-  eval $efi_command_2
+
+if [[ $test_mode -eq 1 ]]; then
+  echo "$0 : INFO : --test mode enabled. No changes will be made."
+  echo "$0 : INFO : Script validation complete. Ready to rename EFI entry."
 else
-  echo "$0 : INFO : command execution aborted"
+  read -p "Execute these commands? [y/N] " -n 1 -r
+  echo   # terminate the shell UI line
+  if [[ $REPLY =~ ^[Yy]$ ]] ; then
+    echo "... executing \`$efi_command_1\` ..."
+    eval "$efi_command_1"
+    echo "... executing \`$efi_command_2\` ..."
+    eval "$efi_command_2"
+    echo
+    echo "Done. Verifying new entry:"
+    efibootmgr | grep --color=always "$new_label"
+  else
+    echo "$0 : INFO : Command execution aborted by user."
+  fi
 fi
